@@ -5,6 +5,9 @@ from db import Preference, User, get_db
 
 
 def add_crud_api(app: FastAPI):
+    @app.get("/health")
+    async def health(request: Request):
+        return {"status": "yeah yeah"}
 
     @app.post("/api/submit-preferences")
     async def save_preferences(request: Request, preferences: dict, db: Session = Depends(get_db)):

@@ -18,7 +18,7 @@ class User(Base):
 class Student(Base):
     __tablename__ = "students"
     will_sign_contract = Column(Boolean)
-    id = Column(Integer, ForeignKey("users.id"))
+    id = Column(Integer, ForeignKey("users.id"), primary_key=True, index=True)
     preferences = relationship("Preference", back_populates="student")
     assignments = relationship("Assignment", back_populates="student")
 
