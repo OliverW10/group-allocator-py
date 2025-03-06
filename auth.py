@@ -1,3 +1,5 @@
+import datetime
+import uuid
 from fastapi import APIRouter, FastAPI, Request
 from authlib.integrations.starlette_client import OAuth
 from starlette.config import Config
@@ -24,24 +26,56 @@ oauth.register(
 
 router = APIRouter()
 
-@router.get("/api/auth/login")
+@router.get("/status")
+async def status(request: Request):
+    return {"status": "yeah yeah"}
+
+@router.get("/fake-login")
+async def fake_login(request: Request, email: str):
+    name_part = email.split('@')[0]
+    display_name = ' '.join(word.capitalize() for word in name_part.split('.'))
+    unique_id = str(uuid.uuid4())
+    now = datetime.utcnow()
+    token_data = {
+            "oid": unique_id,  # Microsoft's object ID
+            "sub": unique_id,  # Subject identifier
+            "tid": "fake-tenant-id-12345",  # Tenant ID
+            "upn": email,  # User Principal Name
+            "preferred_username": email,
+            "name": display_name,
+            "email": email,
+            "given_name": display_name.split()[0] if ' ' in display_name else display_name,
+            "family_name": display_name.split()[-1] if ' ' in display_name else "",
+            "aud": "fake-client-id-12345",  # Audience (your app's client ID)
+            "iss": "https://login.microsoftonline.com/fake-tenant-id/v2.0",  # Issuer
+            "iat": int(now.timestamp()),  # Issued At
+            "exp": int((now + datetime.timedelta(hours=1)).timestamp()),  # Expiration
+            "nbf": int(now.timestamp()),  # Not Before
+            "roles": ["User"]  # Default role
+        }
+        
+    # Store token data in session, similar to what oauth.microsoft would do
+    request.session["user"] = token_data
+    return RedirectResponse(url="/form.html")
+
+@router.get("/login")
 async def login(request: Request):
     redirect_uri = REDIRECT_URI
     return await oauth.microsoft.authorize_redirect(request, redirect_uri)
 
-@router.get("/api/auth/callback")
+@router.get("/callback")
 async def auth_callback(request: Request):
     token = await oauth.microsoft.authorize_access_token(request)
     user = await oauth.microsoft.parse_id_token(request, token)
     request.session["user"] = user
-    return {"message": "Authentication successful", "user": user}
+    return RedirectResponse(url="/form.html")
 
-@router.get("/api/auth/logout")
+@router.get("/logout")
 async def logout(request: Request):
     request.session.pop("user", None)
     return RedirectResponse(url="/")
 
-@router.get("/api/auth/user")
+@router.get("/user")
 async def get_user(request: Request):
     user = request.session.get("user")
     if not user:

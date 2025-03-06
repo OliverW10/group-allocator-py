@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login with Microsoft</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f3f3f3;
+        }
+
+        .container {
+            text-align: center;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .login-btn {
+            background-color: #2F2F2F;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+
+        .login-btn:hover {
+            background-color: #505050;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <section>
+            <h2>Login with Microsoft</h2>
+            <a href="/auth/login">
+                <button class="login-btn">Sign in with Microsoft</button>
+            </a>
+        </section>
+
+        <section>
+            <h3>Development Login</h3>
+            <form action="/auth/fake-login" method="get">
+                <input type="email" name="email" placeholder="Enter email" required style="margin-bottom: 10px; padding: 5px;">
+                <br>
+                <button type="submit" class="login-btn">Fake Login</button>
+            </form>
+        </section>
+    </div>
+</body>
+
+</html>

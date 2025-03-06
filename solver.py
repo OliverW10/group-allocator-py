@@ -122,7 +122,7 @@ if __name__ == "__main__":
     # Sample data
     students: List[str] = ["s1", "s2", "s3", "s4", "s5", "s6", "s7", "s8", "s9", "s10", "s11", "s12"]
     
-    projects: List[str] = ["p1", "p2", "p3", "p4", "p5"]
+    projects: List[str] = ["p1", "p2", "p3", "p4", "p5", "p6", "p7"]
     
     # Top 10 preferences for each student (ordered)
     student_preferences: Dict[str, List[str]] = {
@@ -137,7 +137,7 @@ if __name__ == "__main__":
         "s9": ["p4", "p3", "p5", "p1", "p2"],
         "s10": ["p5", "p2", "p4", "p3", "p1"],
         "s11": ["p1", "p4", "p5", "p2", "p3"],
-        "s12": ["p2", "p5", "p1", "p3", "p4"]
+        "s12": ["p8", "p7", "p1", "p3", "p4"]
     }
     
     # Students willing to sign contracts

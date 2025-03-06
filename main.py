@@ -1,14 +1,12 @@
-
-
 from fastapi import FastAPI
 from starlette.middleware.sessions import SessionMiddleware
-
-from api import add_crud_api
-from auth import SECRET_KEY, add_auth_controller
-
+from auth import SECRET_KEY, router as auth_router
+from api import router as api_router
+from fastapi.staticfiles import StaticFiles
 
 app = FastAPI()
 # Middleware for session management
 app.add_middleware(SessionMiddleware, secret_key=SECRET_KEY)
-add_auth_controller(app)
-
+app.mount("/", StaticFiles(directory="static", html=True), name="static")
+app.include_router(auth_router, prefix="/auth")
+app.include_router(api_router, prefix="/api")
