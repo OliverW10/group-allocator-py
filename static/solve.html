@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project Assignment Dashboard</title>
+    <style>
+        :root {
+            --primary: #4a6fa5;
+            --secondary: #6f9eaf;
+            --success: #28a745;
+            --warning: #ffc107;
+            --danger: #dc3545;
+            --light: #f8f9fa;
+            --dark: #343a40;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            line-height: 1.5;
+            color: #212529;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            background-color: var(--primary);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            margin-bottom: 20px;
+            border-radius: 4px;
+        }
+        
+        h1, h2, h3 {
+            margin-top: 0;
+        }
+        
+        .card {
+            background-color: white;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+        
+        .card-header {
+            background-color: #f8f9fa;
+            padding: 15px 20px;
+            border-bottom: 1px solid #e9ecef;
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .card-body {
+            padding: 20px;
+        }
+        
+        .btn {
+            display: inline-block;
+            font-weight: 400;
+            text-align: center;
+            white-space: nowrap;
+            vertical-align: middle;
+            user-select: none;
+            border: 1px solid transparent;
+            padding: 0.5rem 1rem;
+            font-size: 1rem;
+            line-height: 1.5;
+            border-radius: 0.25rem;
+            cursor: pointer;
+            transition: all 0.15s ease-in-out;
+        }
+        
+        .btn-primary {
+            color: #fff;
+            background-color: var(--primary);
+            border-color: var(--primary);
+        }
+        
+        .btn-primary:hover {
+            background-color: #3a5a8a;
+            border-color: #3a5a8a;
+        }
+        
+        .btn-success {
+            color: #fff;
+            background-color: var(--success);
+            border-color: var(--success);
+        }
+        
+        .btn-success:hover {
+            background-color: #218838;
+            border-color: #1e7e34;
+        }
+        
+        .btn-danger {
+            color: #fff;
+            background-color: var(--danger);
+            border-color: var(--danger);
+        }
+        
+        .btn-danger:hover {
+            background-color: #c82333;
+            border-color: #bd2130;
+        }
+        
+        .alert {
+            padding: 12px 20px;
+            margin-bottom: 16px;
+            border: 1px solid transparent;
+            border-radius: 4px;
+        }
+        
+        .alert-success {
+            color: #155724;
+            background-color: #d4edda;
+            border-color: #c3e6cb;
+        }
+        
+        .alert-danger {
+            color: #721c24;
+            background-color: #f8d7da;
+            border-color: #f5c6cb;
+        }
+        
+        .alert-warning {
+            color: #856404;
+            background-color: #fff3cd;
+            border-color: #ffeeba;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 1rem;
+        }
+        
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        th {
+            background-color: #f8f9fa;
+            font-weight: 500;
+        }
+        
+        tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+        
+        tr:hover {
+            background-color: #f1f1f1;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 0.25em 0.4em;
+            font-size: 75%;
+            font-weight: 700;
+            line-height: 1;
+            text-align: center;
+            white-space: nowrap;
+            vertical-align: baseline;
+            border-radius: 0.25rem;
+        }
+        
+        .badge-success {
+            color: #fff;
+            background-color: var(--success);
+        }
+        
+        .badge-warning {
+            color: #212529;
+            background-color: var(--warning);
+        }
+        
+        .preference-bar {
+            height: 20px;
+            background-color: #e9ecef;
+            border-radius: 4px;
+            margin-top: 5px;
+            overflow: hidden;
+        }
+        
+        .preference-fill {
+            height: 100%;
+            background-color: var(--secondary);
+            width: 0%;
+        }
+        
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-radius: 50%;
+            border-top: 4px solid var(--primary);
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            vertical-align: middle;
+            margin-right: 10px;
+            display: none;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Project Assignment Dashboard</h1>
+        </header>
+        
+        <div id="notification-area"></div>
+        
+        <div class="card">
+            <div class="card-header">
+                <h2>Students and Preferences</h2>
+                <button id="refresh-preferences" class="btn btn-primary">Refresh</button>
+            </div>
+            <div class="card-body">
+                <div id="preferences-loading">Loading student preferences...</div>
+                <div id="preferences-content" class="hidden">
+                    <table id="preferences-table">
+                        <thead>
+                            <tr>
+                                <th>Student ID</th>
+                                <th>User ID</th>
+                                <th>Will Sign Contract</th>
+                                <th>Project Preferences</th>
+                            </tr>
+                        </thead>
+                        <tbody id="preferences-tbody">
+                            <!-- Preferences data will be loaded here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-header">
+                <h2>Current Assignments</h2>
+                <button id="refresh-assignments" class="btn btn-primary">Refresh</button>
+            </div>
+            <div class="card-body">
+                <div id="assignments-loading">Loading current assignments...</div>
+                <div id="assignments-content" class="hidden">
+                    <table id="assignments-table">
+                        <thead>
+                            <tr>
+                                <th>Assignment ID</th>
+                                <th>Student</th>
+                                <th>Project</th>
+                                <th>Client</th>
+                                <th>Preference Match</th>
+                            </tr>
+                        </thead>
+                        <tbody id="assignments-tbody">
+                            <!-- Assignments data will be loaded here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-header">
+                <h2>Run Solver</h2>
+            </div>
+            <div class="card-body">
+                <p>Click the button below to run the solver and generate new assignments based on current preferences.</p>
+                <button id="run-solver" class="btn btn-success">
+                    <span id="solver-spinner" class="spinner"></span>
+                    Run Solver
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initial data load
+            fetchPreferences();
+            fetchAssignments();
+            
+            // Set up event listeners
+            document.getElementById('refresh-preferences').addEventListener('click', fetchPreferences);
+            document.getElementById('refresh-assignments').addEventListener('click', fetchAssignments);
+            document.getElementById('run-solver').addEventListener('click', runSolver);
+        });
+        
+        function showNotification(message, type = 'success') {
+            const notificationArea = document.getElementById('notification-area');
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type}`;
+            alert.textContent = message;
+            
+            // Add close button
+            const closeButton = document.createElement('span');
+            closeButton.innerHTML = '&times;';
+            closeButton.style.float = 'right';
+            closeButton.style.cursor = 'pointer';
+            closeButton.addEventListener('click', function() {
+                notificationArea.removeChild(alert);
+            });
+            alert.appendChild(closeButton);
+            
+            notificationArea.appendChild(alert);
+            
+            // Auto-remove after 5 seconds
+            setTimeout(() => {
+                if (notificationArea.contains(alert)) {
+                    notificationArea.removeChild(alert);
+                }
+            }, 5000);
+        }
+        
+        function fetchPreferences() {
+            // Show loading state
+            document.getElementById('preferences-loading').style.display = 'block';
+            document.getElementById('preferences-content').classList.add('hidden');
+            
+            fetch('/api/preferences')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    renderPreferences(data);
+                    document.getElementById('preferences-loading').style.display = 'none';
+                    document.getElementById('preferences-content').classList.remove('hidden');
+                })
+                .catch(error => {
+                    console.error('Error fetching preferences:', error);
+                    showNotification('Failed to load student preferences: ' + error.message, 'danger');
+                    document.getElementById('preferences-loading').style.display = 'none';
+                });
+        }
+        
+        function renderPreferences(data) {
+            const tbody = document.getElementById('preferences-tbody');
+            tbody.innerHTML = '';
+            
+            if (!data || !data.length) {
+                const tr = document.createElement('tr');
+                const td = document.createElement('td');
+                td.colSpan = 4;
+                td.textContent = 'No student preference data available.';
+                td.style.textAlign = 'center';
+                tr.appendChild(td);
+                tbody.appendChild(tr);
+                return;
+            }
+            
+            data.forEach(student => {
+                const tr = document.createElement('tr');
+                
+                // Student ID
+                const tdId = document.createElement('td');
+                tdId.textContent = student.id;
+                tr.appendChild(tdId);
+                
+                // User ID
+                const tdUserId = document.createElement('td');
+                tdUserId.textContent = student.user_id;
+                tr.appendChild(tdUserId);
+                
+                // Will Sign Contract
+                const tdContract = document.createElement('td');
+                const contractBadge = document.createElement('span');
+                contractBadge.className = `badge ${student.will_sign_contract ? 'badge-success' : 'badge-warning'}`;
+                contractBadge.textContent = student.will_sign_contract ? 'Yes' : 'No';
+                tdContract.appendChild(contractBadge);
+                tr.appendChild(tdContract);
+                
+                // Preferences
+                const tdPreferences = document.createElement('td');
+                if (student.preferences && student.preferences.length) {
+                    student.preferences.forEach(pref => {
+                        // Create a div for each preference
+                        const prefDiv = document.createElement('div');
+                        prefDiv.style.marginBottom = '10px';
+                        
+                        // Project info
+                        const projectInfo = document.createElement('div');
+                        projectInfo.textContent = `Project ${pref.project_id}`;
+                        if (pref.project && pref.project.requires_contract) {
+                            const contractBadge = document.createElement('span');
+                            contractBadge.className = 'badge badge-warning';
+                            contractBadge.textContent = 'Contract Required';
+                            contractBadge.style.marginLeft = '8px';
+                            projectInfo.appendChild(contractBadge);
+                        }
+                        prefDiv.appendChild(projectInfo);
+                        
+                        // Preference strength bar
+                        const strengthValue = document.createElement('div');
+                        strengthValue.textContent = `Preference: ${(pref.strength * 100).toFixed(1)}%`;
+                        prefDiv.appendChild(strengthValue);
+                        
+                        const prefBar = document.createElement('div');
+                        prefBar.className = 'preference-bar';
+                        const prefFill = document.createElement('div');
+                        prefFill.className = 'preference-fill';
+                        prefFill.style.width = `${pref.strength * 100}%`;
+                        prefBar.appendChild(prefFill);
+                        prefDiv.appendChild(prefBar);
+                        
+                        tdPreferences.appendChild(prefDiv);
+                    });
+                } else {
+                    tdPreferences.textContent = 'No preferences set';
+                }
+                tr.appendChild(tdPreferences);
+                
+                tbody.appendChild(tr);
+            });
+        }
+        
+        function fetchAssignments() {
+            // Show loading state
+            document.getElementById('assignments-loading').style.display = 'block';
+            document.getElementById('assignments-content').classList.add('hidden');
+            
+            fetch('/api/solution')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    renderAssignments(data);
+                    document.getElementById('assignments-loading').style.display = 'none';
+                    document.getElementById('assignments-content').classList.remove('hidden');
+                })
+                .catch(error => {
+                    console.error('Error fetching assignments:', error);
+                    showNotification('Failed to load current assignments: ' + error.message, 'danger');
+                    document.getElementById('assignments-loading').style.display = 'none';
+                });
+        }
+        
+        function renderAssignments(data) {
+            const tbody = document.getElementById('assignments-tbody');
+            tbody.innerHTML = '';
+            
+            if (!data || !data.length) {
+                const tr = document.createElement('tr');
+                const td = document.createElement('td');
+                td.colSpan = 5;
+                td.textContent = 'No assignments have been made yet.';
+                td.style.textAlign = 'center';
+                tr.appendChild(td);
+                tbody.appendChild(tr);
+                return;
+            }
+            
+            data.forEach(assignment => {
+                const tr = document.createElement('tr');
+                
+                // Assignment ID
+                const tdId = document.createElement('td');
+                tdId.textContent = assignment.id;
+                tr.appendChild(tdId);
+                
+                // Student
+                const tdStudent = document.createElement('td');
+                if (assignment.student) {
+                    tdStudent.textContent = `${assignment.student.user_id} (ID: ${assignment.student_id})`;
+                } else {
+                    tdStudent.textContent = `ID: ${assignment.student_id}`;
+                }
+                tr.appendChild(tdStudent);
+                
+                // Project
+                const tdProject = document.createElement('td');
+                if (assignment.project) {
+                    tdProject.textContent = `Project ${assignment.project_id}`;
+                    if (assignment.project.requires_contract) {
+                        const contractBadge = document.createElement('span');
+                        contractBadge.className = 'badge badge-warning';
+                        contractBadge.textContent = 'Contract Required';
+                        contractBadge.style.marginLeft = '8px';
+                        tdProject.appendChild(contractBadge);
+                    }
+                } else {
+                    tdProject.textContent = `ID: ${assignment.project_id}`;
+                }
+                tr.appendChild(tdProject);
+                
+                // Client
+                const tdClient = document.createElement('td');
+                if (assignment.project && assignment.project.client) {
+                    tdClient.textContent = assignment.project.client.name || `ID: ${assignment.project.client_id}`;
+                } else {
+                    tdClient.textContent = 'Unknown';
+                }
+                tr.appendChild(tdClient);
+                
+                // Preference Match
+                const tdMatch = document.createElement('td');
+                if (assignment.student && assignment.student.preferences) {
+                    const matchingPref = assignment.student.preferences.find(p => p.project_id === assignment.project_id);
+                    if (matchingPref) {
+                        const matchStrength = (matchingPref.strength * 100).toFixed(1);
+                        tdMatch.textContent = `${matchStrength}%`;
+                        
+                        // Color code the match
+                        if (matchingPref.strength >= 0.7) {
+                            tdMatch.style.color = 'green';
+                            tdMatch.style.fontWeight = 'bold';
+                        } else if (matchingPref.strength >= 0.4) {
+                            tdMatch.style.color = 'orange';
+                        } else {
+                            tdMatch.style.color = 'red';
+                        }
+                    } else {
+                        tdMatch.textContent = 'No preference';
+                        tdMatch.style.color = 'gray';
+                    }
+                } else {
+                    tdMatch.textContent = 'Unknown';
+                    tdMatch.style.color = 'gray';
+                }
+                tr.appendChild(tdMatch);
+                
+                tbody.appendChild(tr);
+            });
+        }
+        
+        function runSolver() {
+            const solverButton = document.getElementById('run-solver');
+            const spinner = document.getElementById('solver-spinner');
+            
+            // Disable button and show spinner
+            solverButton.disabled = true;
+            spinner.style.display = 'inline-block';
+            
+            fetch('/api/solve', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({})  // You can add parameters here if needed
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Solver failed to run');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    showNotification('Solver completed successfully! Refreshing assignments...', 'success');
+                    fetchAssignments();  // Refresh assignments to show new results
+                })
+                .catch(error => {
+                    console.error('Error running solver:', error);
+                    showNotification('Failed to run solver: ' + error.message, 'danger');
+                })
+                .finally(() => {
+                    // Re-enable button and hide spinner
+                    solverButton.disabled = false;
+                    spinner.style.display = 'none';
+                });
+        }
+    </script>
+</body>
+</html>

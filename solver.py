@@ -1,17 +1,17 @@
 from ortools.sat.python import cp_model
-import pandas as pd
+from typing import Dict, List, Tuple, Optional, Set, Union
 
 def assign_students_to_projects(
-    students,
-    projects,
-    student_preferences,
-    contract_willing_students,
-    contract_required_projects,
-    client_projects,
-    pre_allocations,
-    min_group_size=3,
-    max_group_size=4
-):
+    students: List[str], # student and project ids
+    projects: List[str],
+    student_preferences: Dict[str, List[str]], # ordered preferences
+    contract_willing_students: List[str],
+    contract_required_projects: List[str],
+    client_projects: Dict[str, List[str]],
+    pre_allocations: Dict[str, List[str]],
+    min_group_size: int = 3,
+    max_group_size: int = 4
+) -> Tuple[Optional[Dict[str, List[str]]], int]:
     """
     Assign students to projects based on preferences and constraints.
     
@@ -27,20 +27,20 @@ def assign_students_to_projects(
     - max_group_size: Maximum number of students per project
     
     Returns:
-    - Dictionary mapping project IDs to list of assigned student IDs
-    - Overall preference satisfaction score
+    - Dictionary mapping project IDs to list of assigned student IDs, or None if no solution found
+    - Overall preference satisfaction score (0 if no solution found)
     """
     model = cp_model.CpModel()
     
     # Create variables
     # x[s, p] = 1 if student s is assigned to project p, 0 otherwise
-    x = {}
+    x: Dict[Tuple[str, str], cp_model.IntVar] = {}
     for s in students:
         for p in projects:
             x[s, p] = model.NewBoolVar(f'x_{s}_{p}')
     
     # y[p] = 1 if project p is selected (has students), 0 otherwise
-    y = {}
+    y: Dict[str, cp_model.IntVar] = {}
     for p in projects:
         y[p] = model.NewBoolVar(f'y_{p}')
     
@@ -80,10 +80,10 @@ def assign_students_to_projects(
     
     # Objective: Maximize preference satisfaction
     # Lower rank (higher preference) gets higher score
-    preference_weights = {1: 10, 2: 9, 3: 8, 4: 7, 5: 6, 
-                          6: 5, 7: 4, 8: 3, 9: 2, 10: 1}
+    preference_weights: Dict[int, int] = {1: 10, 2: 9, 3: 8, 4: 7, 5: 6, 
+                                          6: 5, 7: 4, 8: 3, 9: 2, 10: 1}
     
-    objective_terms = []
+    objective_terms: List[cp_model.LinearExpr] = []
     for s in students:
         for rank, p in enumerate(student_preferences.get(s, []), 1):
             if rank <= 10 and p in projects:
@@ -97,14 +97,14 @@ def assign_students_to_projects(
     
     if status == cp_model.OPTIMAL or status == cp_model.FEASIBLE:
         # Extract solution
-        assignments = {p: [] for p in projects}
+        assignments: Dict[str, List[str]] = {p: [] for p in projects}
         for s in students:
             for p in projects:
                 if solver.Value(x[s, p]) == 1:
                     assignments[p].append(s)
         
         # Calculate preference satisfaction score
-        total_score = 0
+        total_score: int = 0
         for s in students:
             for rank, p in enumerate(student_preferences.get(s, []), 1):
                 if rank <= 10 and p in projects and solver.Value(x[s, p]) == 1:
@@ -120,12 +120,12 @@ def assign_students_to_projects(
 # Example usage
 if __name__ == "__main__":
     # Sample data
-    students = ["s1", "s2", "s3", "s4", "s5", "s6", "s7", "s8", "s9", "s10", "s11", "s12"]
+    students: List[str] = ["s1", "s2", "s3", "s4", "s5", "s6", "s7", "s8", "s9", "s10", "s11", "s12"]
     
-    projects = ["p1", "p2", "p3", "p4", "p5"]
+    projects: List[str] = ["p1", "p2", "p3", "p4", "p5"]
     
     # Top 10 preferences for each student (ordered)
-    student_preferences = {
+    student_preferences: Dict[str, List[str]] = {
         "s1": ["p1", "p2", "p3", "p4", "p5"],
         "s2": ["p2", "p1", "p3", "p5", "p4"],
         "s3": ["p3", "p1", "p2", "p4", "p5"],
@@ -141,19 +141,19 @@ if __name__ == "__main__":
     }
     
     # Students willing to sign contracts
-    contract_willing_students = ["s1", "s3", "s5", "s7", "s9", "s11"]
+    contract_willing_students: List[str] = ["s1", "s3", "s5", "s7", "s9", "s11"]
     
     # Projects requiring contracts
-    contract_required_projects = ["p1", "p3"]
+    contract_required_projects: List[str] = ["p1", "p3"]
     
     # Projects from the same client
-    client_projects = {
+    client_projects: Dict[str, List[str]] = {
         "client1": ["p1", "p2"],
         "client2": ["p3", "p4"]
     }
     
     # Pre-allocations
-    pre_allocations = {
+    pre_allocations: Dict[str, List[str]] = {
         "p5": ["s8", "s10"]
     }
     
@@ -171,29 +171,32 @@ if __name__ == "__main__":
     # Print results
     print(f"Total preference satisfaction score: {score}")
     print("\nProject assignments:")
-    for p, assigned_students in assignments.items():
-        print(f"{p}: {', '.join(assigned_students)}")
-    
-    # Print statistics
-    print("\nPreference statistics:")
-    pref_stats = {i: 0 for i in range(1, 11)}
-    pref_stats["unpreferred"] = 0
-    
-    for s in students:
-        assigned = False
-        for p in assignments:
-            if s in assignments[p]:
-                if p in student_preferences[s]:
-                    rank = student_preferences[s].index(p) + 1
-                    if rank <= 10:
-                        pref_stats[rank] += 1
-                        assigned = True
-                        break
-        if not assigned:
-            pref_stats["unpreferred"] += 1
-    
-    for rank, count in pref_stats.items():
-        if rank != "unpreferred":
-            print(f"Students who got their #{rank} choice: {count}")
-        else:
-            print(f"Students who got a project not in their top 10: {count}")
+    if assignments:
+        for p, assigned_students in assignments.items():
+            print(f"{p}: {', '.join(assigned_students)}")
+        
+        # Print statistics
+        print("\nPreference statistics:")
+        pref_stats: Dict[Union[int, str], int] = {i: 0 for i in range(1, 11)}
+        pref_stats["unpreferred"] = 0
+        
+        for s in students:
+            assigned = False
+            for p in assignments:
+                if s in assignments[p]:
+                    if p in student_preferences[s]:
+                        rank = student_preferences[s].index(p) + 1
+                        if rank <= 10:
+                            pref_stats[rank] += 1
+                            assigned = True
+                            break
+            if not assigned:
+                pref_stats["unpreferred"] += 1
+        
+        for rank, count in pref_stats.items():
+            if rank != "unpreferred":
+                print(f"Students who got their #{rank} choice: {count}")
+            else:
+                print(f"Students who got a project not in their top 10: {count}")
+    else:
+        print("No feasible solution found.")

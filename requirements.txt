@@ -3,3 +3,6 @@ ortools
 fastapi
 Authlib
 sqlalchemy
+
+# dep of starlette, idk why it doesn't pull it in itself
+itsdangerous
