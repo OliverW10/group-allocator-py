@@ -11,4 +11,4 @@ app = FastAPI()
 # Middleware for session management
 app.add_middleware(SessionMiddleware, secret_key=SECRET_KEY)
 add_auth_controller(app)
-add_crud_api(app)
+

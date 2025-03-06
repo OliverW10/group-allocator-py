@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Request
+from fastapi import APIRouter, FastAPI, Request
 from authlib.integrations.starlette_client import OAuth
 from starlette.config import Config
 from starlette.responses import RedirectResponse
@@ -22,27 +22,28 @@ oauth.register(
     client_kwargs={"scope": "openid profile email"},
 )
 
-def add_auth_controller(app: FastAPI):
-    @app.get("/api/auth/login")
-    async def login(request: Request):
-        redirect_uri = REDIRECT_URI
-        return await oauth.microsoft.authorize_redirect(request, redirect_uri)
+router = APIRouter()
 
-    @app.get("/api/auth/callback")
-    async def auth_callback(request: Request):
-        token = await oauth.microsoft.authorize_access_token(request)
-        user = await oauth.microsoft.parse_id_token(request, token)
-        request.session["user"] = user
-        return {"message": "Authentication successful", "user": user}
+@router.get("/api/auth/login")
+async def login(request: Request):
+    redirect_uri = REDIRECT_URI
+    return await oauth.microsoft.authorize_redirect(request, redirect_uri)
 
-    @app.get("/api/auth/logout")
-    async def logout(request: Request):
-        request.session.pop("user", None)
-        return RedirectResponse(url="/")
+@router.get("/api/auth/callback")
+async def auth_callback(request: Request):
+    token = await oauth.microsoft.authorize_access_token(request)
+    user = await oauth.microsoft.parse_id_token(request, token)
+    request.session["user"] = user
+    return {"message": "Authentication successful", "user": user}
 
-    @app.get("/api/auth/user")
-    async def get_user(request: Request):
-        user = request.session.get("user")
-        if not user:
-            return {"error": "Not authenticated"}
-        return user
+@router.get("/api/auth/logout")
+async def logout(request: Request):
+    request.session.pop("user", None)
+    return RedirectResponse(url="/")
+
+@router.get("/api/auth/user")
+async def get_user(request: Request):
+    user = request.session.get("user")
+    if not user:
+        return {"error": "Not authenticated"}
+    return user
