@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project Preferences</title>
+</head>
+<body>
+    <h2>Submit Your Project Preferences</h2>
+    <form action="http://localhost:8000/student/preferences" method="post">
+        <label for="project1">
+            <input type="checkbox" name="project_ids" value="1" id="project1"> Project 1
+        </label><br>
+        <label for="project2">
+            <input type="checkbox" name="project_ids" value="2" id="project2"> Project 2
+        </label><br>
+        <label for="project3">
+            <input type="checkbox" name="project_ids" value="3" id="project3"> Project 3
+        </label><br>
+        <button type="submit">Submit Preferences</button>
+    </form>
+</body>
+</html>
