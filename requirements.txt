@@ -5,6 +5,7 @@ Authlib
 sqlalchemy
 uvicorn
 psycopg2
+python-multipart
 
 # dep of starlette, idk why it doesn't pull it in itself
 itsdangerous

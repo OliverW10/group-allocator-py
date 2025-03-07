@@ -25,6 +25,7 @@ class Student(Base):
 class Project(Base):
     __tablename__ = "projects"
     id = Column(Integer, primary_key=True, index=True)
+    name = Column(String)
     requires_contract = Column(Boolean)
     client_id = Column(Integer, ForeignKey("clients.id"))
     preferences = relationship("Preference", back_populates="project")
@@ -61,6 +62,8 @@ class SolveRun(Base):
     assignment = relationship("Assignment")
 
 
+# Todo: change to migrations with alembic
+Base.metadata.drop_all(bind=engine)
 Base.metadata.create_all(bind=engine)
 
 def get_db():

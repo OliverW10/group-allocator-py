@@ -1,13 +1,13 @@
 import datetime
 import uuid
-from fastapi import APIRouter, FastAPI, Request
+from fastapi import APIRouter, Request
 from authlib.integrations.starlette_client import OAuth
 from starlette.config import Config
 from starlette.responses import RedirectResponse
 
 # Load environment variables
 config = Config()
-SECRET_KEY = "your-secret-key"  # Change this to a secure random key
+SECRET_KEY = "your-secret-key" # Change this to a secure random key
 CLIENT_ID = "your-microsoft-client-id"
 CLIENT_SECRET = "your-microsoft-client-secret"
 REDIRECT_URI = "http://localhost:8000/auth/callback"
@@ -35,7 +35,7 @@ async def fake_login(request: Request, email: str):
     name_part = email.split('@')[0]
     display_name = ' '.join(word.capitalize() for word in name_part.split('.'))
     unique_id = str(uuid.uuid4())
-    now = datetime.utcnow()
+    now = datetime.datetime.now(tz=datetime.UTC)
     token_data = {
             "oid": unique_id,  # Microsoft's object ID
             "sub": unique_id,  # Subject identifier
@@ -56,6 +56,10 @@ async def fake_login(request: Request, email: str):
         
     # Store token data in session, similar to what oauth.microsoft would do
     request.session["user"] = token_data
+    
+    # Check if email starts with 'marc' for admin access
+    if email.lower().startswith('marc'):
+        return RedirectResponse(url="/admin.html")
     return RedirectResponse(url="/form.html")
 
 @router.get("/login")

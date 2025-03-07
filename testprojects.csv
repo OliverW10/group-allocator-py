@@ -1,0 +1,11 @@
+project_id, name, requires_contract, client_name
+1001, Mobile App Development, 1, TechCorp Inc.
+1002, Database Migration, 0, DataFlow Systems
+1003, Website Redesign, 1, TechCorp Inc.
+1004, AI Chatbot Integration, 1, Customer Service Pro
+1005, Cloud Infrastructure Setup, 0, CloudTech Solutions
+1006, Security Audit System, 1, SecureBank
+1007, E-commerce Platform, 0, TechCorp Inc.
+1008, Analytics Dashboard, 1, Business Insights Ltd
+1009, IoT Monitoring System, 0, CloudTech Solutions
+1010, Payment Gateway Integration, 1, SecureBank

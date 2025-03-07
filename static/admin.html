@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Admin Panel</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .upload-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        .nav-section {
+            margin: 20px 0;
+        }
+        .nav-link {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+        }
+        .nav-link:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <h1>Admin Panel</h1>
+    
+    <div class="upload-section">
+        <h2>Upload Projects</h2>
+        <form id="uploadForm">
+            <input type="file" id="csvFile" accept=".csv" required>
+            <button type="submit">Upload</button>
+        </form>
+        <div id="uploadStatus"></div>
+    </div>
+
+    <div class="nav-section">
+        <a href="/solve.html" class="nav-link">Go to Solver Page</a>
+    </div>
+    <div class="nav-section">
+        <a href="/auth/logout" class="nav-link">Logout</a>
+    </div>
+
+    <script>
+        document.getElementById('uploadForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const fileInput = document.getElementById('csvFile');
+            const statusDiv = document.getElementById('uploadStatus');
+            
+            if (!fileInput.files[0]) {
+                statusDiv.textContent = 'Please select a file';
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+
+            try {
+                const response = await fetch('/api/upload-projects', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                statusDiv.textContent = result.message || result.error;
+                
+                if (response.ok) {
+                    fileInput.value = ''; // Clear the file input
+                }
+            } catch (error) {
+                statusDiv.textContent = 'Error uploading file: ' + error.message;
+            }
+        });
+    </script>
+</body>
+</html>

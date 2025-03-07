@@ -7,18 +7,60 @@
 </head>
 <body>
     <h2>Submit Your Project Preferences</h2>
-    <form action="http://localhost:8000/student/preferences" method="post">
-        <label for="project1">
-            <input type="checkbox" name="project_ids" value="1" id="project1"> Project 1
-        </label><br>
-        <label for="project2">
-            <input type="checkbox" name="project_ids" value="2" id="project2"> Project 2
-        </label><br>
-        <label for="project3">
-            <input type="checkbox" name="project_ids" value="3" id="project3"> Project 3
-        </label><br>
-        <button type="submit">Submit Preferences</button>
-    </form>
+    <div id="preferences-form">
+        <div id="project-list">
+            <!-- Projects will be populated here -->
+        </div>
+        <button onclick="submitPreferences()">Submit Preferences</button>
+    </div>
+    <div id="user-info"></div>
+    <button onclick="window.location.href='/auth/logout'">Logout</button>
+    <script>
+        // Get logged in user info
+        fetch('/auth/user')
+            .then(response => response.json())
+            .then(user => {
+                document.getElementById('user-info').textContent = `Logged in as ${user.name}`;
+            });
+    </script>
+    <script>
+        // Fetch projects when page loads
+        window.onload = async function() {
+            const response = await fetch('/api/projects');
+            const projects = await response.json();
+            
+            const projectList = document.getElementById('project-list');
+            projects.forEach((project, index) => {
+                const label = document.createElement('label');
+                const input = document.createElement('input');
+                input.type = 'checkbox';
+                input.name = 'project_ids';
+                input.value = project.id;
+                input.id = `project${project.id}`;
+                
+                label.appendChild(input);
+                label.appendChild(document.createTextNode(` ${project.name}`));
+                label.appendChild(document.createElement('br'));
+                
+                projectList.appendChild(label);
+            });
+        }
+
+        async function submitPreferences() {
+            const checkboxes = document.querySelectorAll('input[name="project_ids"]:checked');
+            const selectedProjects = Array.from(checkboxes).map(cb => cb.value);
+            
+            await fetch('/api/submit-preferences', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    project_ids: selectedProjects
+                })
+            });
+        }
+    </script>
    
 </body>
 </html>
