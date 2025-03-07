@@ -1,9 +1,12 @@
 import datetime
 import uuid
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Depends, Request
 from authlib.integrations.starlette_client import OAuth
 from starlette.config import Config
 from starlette.responses import RedirectResponse
+from sqlalchemy.orm import Session
+
+from db import User, get_db
 
 # Load environment variables
 config = Config()
@@ -31,7 +34,7 @@ async def status(request: Request):
     return {"status": "yeah yeah"}
 
 @router.get("/fake-login")
-async def fake_login(request: Request, email: str):
+async def fake_login(request: Request, email: str, db: Session = Depends(get_db)):
     name_part = email.split('@')[0]
     display_name = ' '.join(word.capitalize() for word in name_part.split('.'))
     unique_id = str(uuid.uuid4())
@@ -56,7 +59,16 @@ async def fake_login(request: Request, email: str):
         
     # Store token data in session, similar to what oauth.microsoft would do
     request.session["user"] = token_data
-    
+    # Create user record if it doesn't exist
+    user_record = db.query(User).filter(User.id == unique_id).first()
+    if not user_record:
+        user_record = User(
+            id=unique_id,
+            admin=email.lower().startswith('marc'),
+            name=display_name
+        )
+        db.add(user_record)
+        db.commit()
     # Check if email starts with 'marc' for admin access
     if email.lower().startswith('marc'):
         return RedirectResponse(url="/admin.html")

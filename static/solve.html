@@ -317,15 +317,45 @@
                 </button>
             </div>
         </div>
+    <div id="user-info" style="margin: 20px 0; padding: 10px; background: #f8f9fa; border-radius: 4px;">
+        <!-- User info will be displayed here -->
+    </div>
+    <button id="admin-button" class="btn btn-primary">Go to Admin Dashboard</button>
+    <script>
+        document.getElementById('admin-button').addEventListener('click', function() {
+            window.location.href = '/admin.html';
+        });
+    </script>
+    <div class="logout-container" style="margin: 20px 0; text-align: right;">
+        <button id="logout-button" class="btn btn-danger">Logout</button>
+    </div>
+    <div id="notification-area" style="position: fixed; top: 20px; right: 20px; z-index: 1000;">
+        <!-- Notifications will appear here -->
+    </div>
+    <script>
+        document.getElementById('logout-button').addEventListener('click', function() {
+            window.location.href = '/auth/logout';
+        });
+    </script>
+    <script>
+        // Get logged in user info
+        fetch('/auth/user')
+            .then(response => response.json())
+            .then(user => {
+                document.getElementById('user-info').textContent = `Logged in as ${user.name}`;
+            });
+    </script>
     </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             // Initial data load
+            fetchProjects();
             fetchPreferences();
             fetchAssignments();
             
             // Set up event listeners
+            document.getElementById('refresh-projects').addEventListener('click', fetchProjects);
             document.getElementById('refresh-preferences').addEventListener('click', fetchPreferences);
             document.getElementById('refresh-assignments').addEventListener('click', fetchAssignments);
             document.getElementById('run-solver').addEventListener('click', runSolver);
@@ -357,12 +387,85 @@
             }, 5000);
         }
         
+        function fetchProjects() {
+            // Show loading state
+            document.getElementById('projects-loading').style.display = 'block';
+            document.getElementById('projects-content').classList.add('hidden');
+            
+            fetch('/api/projects')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (Array.isArray(data)) {
+                        renderProjects(data);
+                    } else {
+                        throw new Error('Invalid data format received');
+                    }
+                    document.getElementById('projects-loading').style.display = 'none';
+                    document.getElementById('projects-content').classList.remove('hidden');
+                })
+                .catch(error => {
+                    console.error('Error fetching projects:', error);
+                    showNotification('Failed to load projects: ' + error.message, 'danger');
+                    document.getElementById('projects-loading').style.display = 'none';
+                });
+        }
+        
+        function renderProjects(data) {
+            const tbody = document.getElementById('projects-tbody');
+            tbody.innerHTML = '';
+            
+            if (!data || !data.length) {
+                const tr = document.createElement('tr');
+                const td = document.createElement('td');
+                td.colSpan = 4;
+                td.textContent = 'No projects available.';
+                td.style.textAlign = 'center';
+                tr.appendChild(td);
+                tbody.appendChild(tr);
+                return;
+            }
+            
+            data.forEach(project => {
+                const tr = document.createElement('tr');
+                
+                // Project ID
+                const tdId = document.createElement('td');
+                tdId.textContent = project.id;
+                tr.appendChild(tdId);
+                
+                // Name
+                const tdName = document.createElement('td');
+                tdName.textContent = project.name || `Project ${project.id}`;
+                tr.appendChild(tdName);
+                
+                // Client
+                const tdClient = document.createElement('td');
+                tdClient.textContent = project.client?.name || 'Unknown';
+                tr.appendChild(tdClient);
+                
+                // Requires Contract
+                const tdContract = document.createElement('td');
+                const contractBadge = document.createElement('span');
+                contractBadge.className = `badge ${project.requires_contract ? 'badge-warning' : 'badge-success'}`;
+                contractBadge.textContent = project.requires_contract ? 'Yes' : 'No';
+                tdContract.appendChild(contractBadge);
+                tr.appendChild(tdContract);
+                
+                tbody.appendChild(tr);
+            });
+        }
+        
         function fetchPreferences() {
             // Show loading state
             document.getElementById('preferences-loading').style.display = 'block';
             document.getElementById('preferences-content').classList.add('hidden');
             
-            fetch('/api/preferences')
+            fetch('/api/all-preferences')
                 .then(response => {
                     if (!response.ok) {
                         throw new Error('Network response was not ok');
@@ -419,39 +522,24 @@
                 
                 // Preferences
                 const tdPreferences = document.createElement('td');
-                if (student.preferences && student.preferences.length) {
-                    student.preferences.forEach(pref => {
-                        // Create a div for each preference
-                        const prefDiv = document.createElement('div');
-                        prefDiv.style.marginBottom = '10px';
-                        
-                        // Project info
-                        const projectInfo = document.createElement('div');
-                        projectInfo.textContent = `Project ${pref.project_id}`;
-                        if (pref.project && pref.project.requires_contract) {
-                            const contractBadge = document.createElement('span');
-                            contractBadge.className = 'badge badge-warning';
-                            contractBadge.textContent = 'Contract Required';
-                            contractBadge.style.marginLeft = '8px';
-                            projectInfo.appendChild(contractBadge);
-                        }
-                        prefDiv.appendChild(projectInfo);
-                        
-                        // Preference strength bar
-                        const strengthValue = document.createElement('div');
-                        strengthValue.textContent = `Preference: ${(pref.strength * 100).toFixed(1)}%`;
-                        prefDiv.appendChild(strengthValue);
-                        
-                        const prefBar = document.createElement('div');
-                        prefBar.className = 'preference-bar';
-                        const prefFill = document.createElement('div');
-                        prefFill.className = 'preference-fill';
-                        prefFill.style.width = `${pref.strength * 100}%`;
-                        prefBar.appendChild(prefFill);
-                        prefDiv.appendChild(prefBar);
-                        
-                        tdPreferences.appendChild(prefDiv);
+                if (student.preferences?.length) {
+                    // Sort preferences by strength (highest first)
+                    const sortedPrefs = [...student.preferences].sort((a, b) => b.strength - a.strength);
+                    const prefList = sortedPrefs.map(pref => {
+                        const projectName = pref.project?.name || `Project ${pref.project_id}`;
+                        const contractMark = pref.project?.requires_contract ? '*' : '';
+                        return projectName + contractMark;
                     });
+                    tdPreferences.textContent = prefList.join(', ');
+                    // Add a legend for the contract marker if any projects require contracts
+                    if (sortedPrefs.some(pref => pref.project?.requires_contract)) {
+                        const legend = document.createElement('div');
+                        legend.style.fontSize = '0.8em';
+                        legend.style.color = '#666';
+                        legend.style.marginTop = '5px';
+                        legend.textContent = '* Requires Contract';
+                        tdPreferences.appendChild(legend);
+                    }
                 } else {
                     tdPreferences.textContent = 'No preferences set';
                 }

@@ -8,10 +8,81 @@
 <body>
     <h2>Submit Your Project Preferences</h2>
     <div id="preferences-form">
-        <div id="project-list">
+        <div id="project-list" class="sortable-list">
             <!-- Projects will be populated here -->
+            <div class="instructions">
+                Drag and drop projects to order them by preference (most preferred at top)
+            </div>
+            <ul id="sortable-projects">
+                <!-- Projects will be populated here -->
+            </ul>
+            <style>
+                .sortable-list {
+                    padding: 20px;
+                    background: #f5f5f5;
+                    border-radius: 4px;
+                }
+                .instructions {
+                    margin-bottom: 10px;
+                    color: #666;
+                    font-size: 1.1em;
+                }
+                #sortable-projects {
+                    list-style: none;
+                    padding: 0;
+                }
+                #sortable-projects li {
+                    padding: 15px;
+                    background: white;
+                    border: 1px solid #ddd;
+                    margin: 8px 0;
+                    cursor: grab;
+                    border-radius: 4px;
+                    display: flex;
+                    align-items: center;
+                    transition: all 0.2s ease;
+                    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                }
+                #sortable-projects li::before {
+                    content: "⋮⋮";
+                    margin-right: 10px;
+                    color: #999;
+                    font-size: 20px;
+                }
+                #sortable-projects li:hover {
+                    background: #f8f8f8;
+                    transform: translateY(-2px);
+                    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+                }
+                #sortable-projects li:active {
+                    cursor: grabbing;
+                    background: #f0f0f0;
+                }
+                .drag-over {
+                    border: 2px dashed #666 !important;
+                    background: #e9ecef !important;
+                }
+                .position-number {
+                    font-weight: bold;
+                    margin-right: 10px;
+                    min-width: 25px;
+                }
+                .project-info {
+                    flex: 1;
+                }
+            </style>
         </div>
-        <button onclick="submitPreferences()">Submit Preferences</button>
+        <div class="card" style="margin-bottom: 20px;">
+            <div class="card-body">
+                <div class="form-group">
+                    <label for="contract-checkbox" style="display: flex; align-items: center;">
+                        <input type="checkbox" id="contract-checkbox" style="margin-right: 10px;">
+                        <span>I am willing to sign a contract if required for a project</span>
+                    </label>
+                </div>
+            </div>
+        </div>
+        <button onclick="submitPreferences()" class="btn btn-primary">Submit Preferences</button>
     </div>
     <div id="user-info"></div>
     <button onclick="window.location.href='/auth/logout'">Logout</button>
@@ -29,26 +100,95 @@
             const response = await fetch('/api/projects');
             const projects = await response.json();
             
-            const projectList = document.getElementById('project-list');
+            const projectList = document.getElementById('sortable-projects');
             projects.forEach((project, index) => {
-                const label = document.createElement('label');
-                const input = document.createElement('input');
-                input.type = 'checkbox';
-                input.name = 'project_ids';
-                input.value = project.id;
-                input.id = `project${project.id}`;
+                const li = document.createElement('li');
+                li.setAttribute('data-project-id', project.id);
+                li.innerHTML = `
+                    <span class="position-number">${index + 1}.</span>
+                    <span class="project-info">
+                        ${project.name || `Project ${project.id}`}
+                        ${project.client ? ` (${project.client.name})` : ''}
+                        ${project.requires_contract ? ' <span style="color: #856404; background: #fff3cd; padding: 2px 6px; border-radius: 3px; font-size: 0.8em;">Requires Contract</span>' : ''}
+                    </span>
+                `;
+                li.draggable = true;
                 
-                label.appendChild(input);
-                label.appendChild(document.createTextNode(` ${project.name}`));
-                label.appendChild(document.createElement('br'));
-                
-                projectList.appendChild(label);
+                projectList.appendChild(li);
+            });
+
+            // Add drag and drop functionality
+            const items = document.querySelectorAll('#sortable-projects li');
+            items.forEach(item => {
+                item.addEventListener('dragstart', handleDragStart);
+                item.addEventListener('dragover', handleDragOver);
+                item.addEventListener('drop', handleDrop);
+                item.addEventListener('dragenter', handleDragEnter);
+                item.addEventListener('dragleave', handleDragLeave);
+            });
+
+            // Initial update of position numbers
+            updatePositionNumbers();
+        }
+
+        function updatePositionNumbers() {
+            const items = document.querySelectorAll('#sortable-projects li');
+            items.forEach((item, index) => {
+                const positionSpan = item.querySelector('.position-number');
+                positionSpan.textContent = `${index + 1}.`;
             });
         }
 
+        // Drag and drop handlers
+        function handleDragStart(e) {
+            e.dataTransfer.setData('text/plain', e.target.getAttribute('data-project-id'));
+            e.target.style.opacity = '0.4';
+        }
+
+        function handleDragOver(e) {
+            e.preventDefault();
+        }
+
+        function handleDragEnter(e) {
+            e.target.closest('li').classList.add('drag-over');
+        }
+
+        function handleDragLeave(e) {
+            e.target.closest('li').classList.remove('drag-over');
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            const draggedId = e.dataTransfer.getData('text/plain');
+            const draggedElement = document.querySelector(`li[data-project-id="${draggedId}"]`);
+            const dropZone = e.target.closest('li');
+            
+            if (draggedElement && dropZone) {
+                dropZone.classList.remove('drag-over');
+                if (dropZone !== draggedElement) {
+                    const list = dropZone.parentNode;
+                    const draggedPos = Array.from(list.children).indexOf(draggedElement);
+                    const dropPos = Array.from(list.children).indexOf(dropZone);
+                    
+                    if (draggedPos < dropPos) {
+                        dropZone.after(draggedElement);
+                    } else {
+                        dropZone.before(draggedElement);
+                    }
+                    updatePositionNumbers();
+                }
+            }
+            draggedElement.style.opacity = '1';
+        }
+
         async function submitPreferences() {
-            const checkboxes = document.querySelectorAll('input[name="project_ids"]:checked');
-            const selectedProjects = Array.from(checkboxes).map(cb => cb.value);
+            const projectElements = document.querySelectorAll('#sortable-projects li');
+            const preferences = Array.from(projectElements).map((el, index) => ({
+                project_id: parseInt(el.getAttribute('data-project-id')),
+                strength: (projectElements.length - index) / projectElements.length
+            }));
+            
+            const willSignContract = document.getElementById('contract-checkbox').checked;
             
             await fetch('/api/submit-preferences', {
                 method: 'POST',
@@ -56,9 +196,11 @@
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    project_ids: selectedProjects
+                    preferences: preferences,
+                    will_sign_contract: willSignContract
                 })
             });
+            alert('Preferences submitted successfully!');
         }
     </script>
    
