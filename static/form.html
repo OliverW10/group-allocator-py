@@ -70,6 +70,30 @@
                 .project-info {
                     flex: 1;
                 }
+                .notification {
+                    padding: 10px;
+                    margin-bottom: 20px;
+                    border-radius: 4px;
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                }
+                .notification-success {
+                    background-color: #d4edda;
+                    color: #155724;
+                }
+                .notification-warning {
+                    background-color: #fff3cd;
+                    color: #856404;
+                }
+                .notification-error {
+                    background-color: #f8d7da;
+                    color: #721c24;
+                }
+                .notification-close {
+                    cursor: pointer;
+                    padding: 0 5px;
+                }
             </style>
         </div>
         <div class="card" style="margin-bottom: 20px;">
@@ -97,38 +121,78 @@
     <script>
         // Fetch projects when page loads
         window.onload = async function() {
-            const response = await fetch('/api/projects');
-            const projects = await response.json();
-            
-            const projectList = document.getElementById('sortable-projects');
-            projects.forEach((project, index) => {
-                const li = document.createElement('li');
-                li.setAttribute('data-project-id', project.id);
-                li.innerHTML = `
-                    <span class="position-number">${index + 1}.</span>
-                    <span class="project-info">
-                        ${project.name || `Project ${project.id}`}
-                        ${project.client ? ` (${project.client.name})` : ''}
-                        ${project.requires_contract ? ' <span style="color: #856404; background: #fff3cd; padding: 2px 6px; border-radius: 3px; font-size: 0.8em;">Requires Contract</span>' : ''}
-                    </span>
-                `;
-                li.draggable = true;
+            try {
+                // Fetch both projects and preferences
+                const [projectsResponse, preferencesResponse] = await Promise.all([
+                    fetch('/api/projects'),
+                    fetch('/api/preferences')
+                ]);
                 
-                projectList.appendChild(li);
-            });
+                if (!projectsResponse.ok || !preferencesResponse.ok) {
+                    throw new Error('Failed to load data from server');
+                }
+                
+                const projects = await projectsResponse.json();
+                const preferencesData = await preferencesResponse.json();
+                const preferences = preferencesData.preferences || [];
+                
+                const projectList = document.getElementById('sortable-projects');
+                
+                // Set the contract checkbox based on the preferences response
+                document.getElementById('contract-checkbox').checked = preferencesData.will_sign_contract || false;
+                
+                // Create a map of project preferences by strength
+                const preferenceMap = new Map(
+                    preferences.map(pref => [pref.project_id, pref.strength])
+                );
+                
+                // Sort projects based on existing preferences
+                const sortedProjects = [...projects].sort((a, b) => {
+                    const strengthA = preferenceMap.get(a.id) || 0;
+                    const strengthB = preferenceMap.get(b.id) || 0;
+                    return strengthB - strengthA;
+                });
+                
+                // Create and append list items
+                sortedProjects.forEach((project, index) => {
+                    const li = document.createElement('li');
+                    li.setAttribute('data-project-id', project.id);
+                    li.innerHTML = `
+                        <span class="position-number">${index + 1}.</span>
+                        <span class="project-info">
+                            ${project.name || `Project ${project.id}`}
+                            ${project.client_name ? ` (${project.client_name})` : ''}
+                            ${project.requires_contract ? ' <span style="color: #856404; background: #fff3cd; padding: 2px 6px; border-radius: 3px; font-size: 0.8em;">Requires Contract</span>' : ''}
+                        </span>
+                    `;
+                    li.draggable = true;
+                    projectList.appendChild(li);
+                });
 
-            // Add drag and drop functionality
-            const items = document.querySelectorAll('#sortable-projects li');
-            items.forEach(item => {
-                item.addEventListener('dragstart', handleDragStart);
-                item.addEventListener('dragover', handleDragOver);
-                item.addEventListener('drop', handleDrop);
-                item.addEventListener('dragenter', handleDragEnter);
-                item.addEventListener('dragleave', handleDragLeave);
-            });
+                // Add drag and drop functionality
+                const items = document.querySelectorAll('#sortable-projects li');
+                items.forEach(item => {
+                    item.addEventListener('dragstart', handleDragStart);
+                    item.addEventListener('dragover', handleDragOver);
+                    item.addEventListener('drop', handleDrop);
+                    item.addEventListener('dragenter', handleDragEnter);
+                    item.addEventListener('dragleave', handleDragLeave);
+                });
 
-            // Initial update of position numbers
-            updatePositionNumbers();
+                // Update position numbers
+                updatePositionNumbers();
+                
+                // Show message if preferences were loaded
+                if (preferences.length > 0) {
+                    showNotification('Your previous preferences have been loaded. You can reorder them or submit them as they are.', 'success');
+                }else {
+                    showNotification('No previous preferences.', 'warning');
+                }
+                
+            } catch (error) {
+                console.error('Error loading preferences:', error);
+                showNotification('Failed to load your previous preferences. Starting with default order.', 'warning');
+            }
         }
 
         function updatePositionNumbers() {
@@ -201,6 +265,63 @@
                 })
             });
             alert('Preferences submitted successfully!');
+        }
+
+        // Add notification styles at the top of your existing styles
+        function addStyles() {
+            const style = document.createElement('style');
+            style.textContent = `
+                .notification {
+                    padding: 10px;
+                    margin-bottom: 20px;
+                    border-radius: 4px;
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                }
+                .notification-success {
+                    background-color: #d4edda;
+                    color: #155724;
+                }
+                .notification-warning {
+                    background-color: #fff3cd;
+                    color: #856404;
+                }
+                .notification-error {
+                    background-color: #f8d7da;
+                    color: #721c24;
+                }
+                .notification-close {
+                    cursor: pointer;
+                    padding: 0 5px;
+                }
+            `;
+            document.head.appendChild(style);
+        }
+        addStyles();
+
+        function showNotification(message, type = 'success') {
+            const notification = document.createElement('div');
+            notification.className = `notification notification-${type}`;
+            
+            const messageSpan = document.createElement('span');
+            messageSpan.textContent = message;
+            notification.appendChild(messageSpan);
+            
+            const closeButton = document.createElement('span');
+            closeButton.className = 'notification-close';
+            closeButton.textContent = '×';
+            closeButton.onclick = () => notification.remove();
+            notification.appendChild(closeButton);
+            
+            document.getElementById('preferences-form').insertBefore(notification, document.getElementById('project-list'));
+            
+            // Auto-remove after 5 seconds
+            setTimeout(() => {
+                if (notification.parentElement) {
+                    notification.remove();
+                }
+            }, 5000);
         }
     </script>
    

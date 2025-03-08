@@ -229,7 +229,8 @@
             <h1>Project Assignment Dashboard</h1>
         </header>
         
-        <div id="notification-area"></div>
+        <div id="notification-area" style="position: fixed; top: 20px; right: 20px; z-index: 1000; max-width: 400px;"></div>
+        
         <div class="card">
             <div class="card-header">
                 <h2>Available Projects</h2>
@@ -610,7 +611,9 @@
             })
                 .then(response => {
                     if (!response.ok) {
-                        throw new Error('Solver failed to run');
+                        return response.json().then(data => {
+                            throw new Error(data.error || response.statusText);
+                        });
                     }
                     return response.json();
                 })

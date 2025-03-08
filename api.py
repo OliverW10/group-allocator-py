@@ -148,6 +148,10 @@ async def get_preferences(request: Request, db: Session = Depends(get_db)):
 
     user_id = user.get("sub")
     
+    # Get student record to check if they will sign a contract
+    student = db.query(Student).filter(Student.id == user_id).first()
+    will_sign_contract = student.will_sign_contract if student else False
+    
     # Get preferences for current user joined with projects and clients
     preferences = db.query(
         Preference,
@@ -170,7 +174,11 @@ async def get_preferences(request: Request, db: Session = Depends(get_db)):
             "strength": pref.strength
         })
 
-    return preference_list
+    # Include will_sign_contract in the response
+    return {
+        "preferences": preference_list,
+        "will_sign_contract": will_sign_contract
+    }
 
 @router.get("/all-preferences")
 async def get_all_preferences(request: Request, db: Session = Depends(get_db)):
