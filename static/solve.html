@@ -265,8 +265,7 @@
                     <table id="preferences-table">
                         <thead>
                             <tr>
-                                <th>Student ID</th>
-                                <th>User ID</th>
+                                <th>Student Name</th>
                                 <th>Will Sign Contract</th>
                                 <th>Project Preferences</th>
                             </tr>
@@ -290,11 +289,9 @@
                     <table id="assignments-table">
                         <thead>
                             <tr>
-                                <th>Assignment ID</th>
-                                <th>Student</th>
                                 <th>Project</th>
                                 <th>Client</th>
-                                <th>Preference Match</th>
+                                <th>Students</th>
                             </tr>
                         </thead>
                         <tbody id="assignments-tbody">
@@ -504,14 +501,9 @@
                 
                 // Student ID
                 const tdId = document.createElement('td');
-                tdId.textContent = student.id;
+                tdId.textContent = student.name;
                 tr.appendChild(tdId);
-                
-                // User ID
-                const tdUserId = document.createElement('td');
-                tdUserId.textContent = student.user_id;
-                tr.appendChild(tdUserId);
-                
+
                 // Will Sign Contract
                 const tdContract = document.createElement('td');
                 const contractBadge = document.createElement('span');
@@ -526,20 +518,9 @@
                     // Sort preferences by strength (highest first)
                     const sortedPrefs = [...student.preferences].sort((a, b) => b.strength - a.strength);
                     const prefList = sortedPrefs.map(pref => {
-                        const projectName = pref.project?.name || `Project ${pref.project_id}`;
-                        const contractMark = pref.project?.requires_contract ? '*' : '';
-                        return projectName + contractMark;
+                        return pref.project?.name || `Project ${pref.project_id}`;
                     });
                     tdPreferences.textContent = prefList.join(', ');
-                    // Add a legend for the contract marker if any projects require contracts
-                    if (sortedPrefs.some(pref => pref.project?.requires_contract)) {
-                        const legend = document.createElement('div');
-                        legend.style.fontSize = '0.8em';
-                        legend.style.color = '#666';
-                        legend.style.marginTop = '5px';
-                        legend.textContent = '* Requires Contract';
-                        tdPreferences.appendChild(legend);
-                    }
                 } else {
                     tdPreferences.textContent = 'No preferences set';
                 }
@@ -580,7 +561,7 @@
             if (!data || !data.length) {
                 const tr = document.createElement('tr');
                 const td = document.createElement('td');
-                td.colSpan = 5;
+                td.colSpan = 3;
                 td.textContent = 'No assignments have been made yet.';
                 td.style.textAlign = 'center';
                 tr.appendChild(td);
@@ -588,74 +569,25 @@
                 return;
             }
             
-            data.forEach(assignment => {
+            // Data is grouped by project
+            data.forEach(projectGroup => {
                 const tr = document.createElement('tr');
-                
-                // Assignment ID
-                const tdId = document.createElement('td');
-                tdId.textContent = assignment.id;
-                tr.appendChild(tdId);
-                
-                // Student
-                const tdStudent = document.createElement('td');
-                if (assignment.student) {
-                    tdStudent.textContent = `${assignment.student.user_id} (ID: ${assignment.student_id})`;
-                } else {
-                    tdStudent.textContent = `ID: ${assignment.student_id}`;
-                }
-                tr.appendChild(tdStudent);
                 
                 // Project
                 const tdProject = document.createElement('td');
-                if (assignment.project) {
-                    tdProject.textContent = `Project ${assignment.project_id}`;
-                    if (assignment.project.requires_contract) {
-                        const contractBadge = document.createElement('span');
-                        contractBadge.className = 'badge badge-warning';
-                        contractBadge.textContent = 'Contract Required';
-                        contractBadge.style.marginLeft = '8px';
-                        tdProject.appendChild(contractBadge);
-                    }
-                } else {
-                    tdProject.textContent = `ID: ${assignment.project_id}`;
-                }
+                tdProject.textContent = projectGroup.project;
                 tr.appendChild(tdProject);
                 
                 // Client
                 const tdClient = document.createElement('td');
-                if (assignment.project && assignment.project.client) {
-                    tdClient.textContent = assignment.project.client.name || `ID: ${assignment.project.client_id}`;
-                } else {
-                    tdClient.textContent = 'Unknown';
-                }
+                tdClient.textContent = projectGroup.client || 'Unknown';
                 tr.appendChild(tdClient);
                 
-                // Preference Match
-                const tdMatch = document.createElement('td');
-                if (assignment.student && assignment.student.preferences) {
-                    const matchingPref = assignment.student.preferences.find(p => p.project_id === assignment.project_id);
-                    if (matchingPref) {
-                        const matchStrength = (matchingPref.strength * 100).toFixed(1);
-                        tdMatch.textContent = `${matchStrength}%`;
-                        
-                        // Color code the match
-                        if (matchingPref.strength >= 0.7) {
-                            tdMatch.style.color = 'green';
-                            tdMatch.style.fontWeight = 'bold';
-                        } else if (matchingPref.strength >= 0.4) {
-                            tdMatch.style.color = 'orange';
-                        } else {
-                            tdMatch.style.color = 'red';
-                        }
-                    } else {
-                        tdMatch.textContent = 'No preference';
-                        tdMatch.style.color = 'gray';
-                    }
-                } else {
-                    tdMatch.textContent = 'Unknown';
-                    tdMatch.style.color = 'gray';
-                }
-                tr.appendChild(tdMatch);
+                // Students (comma separated list)
+                const tdStudents = document.createElement('td');
+                const studentNames = projectGroup.students.map(student => student.student);
+                tdStudents.textContent = studentNames.join(', ');
+                tr.appendChild(tdStudents);
                 
                 tbody.appendChild(tr);
             });

@@ -23,6 +23,7 @@ if __name__ == "__main__":
     if "--InitDb" in sys.argv:
         print("Resetting database...")
         reset_db()
+        exit()
     
     import uvicorn
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)

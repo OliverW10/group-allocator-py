@@ -65,7 +65,7 @@ async def fake_login(request: Request, email: str, db: Session = Depends(get_db)
         user_record = User(
             id=unique_id,
             admin=email.lower().startswith('marc'),
-            name=display_name
+            name=email
         )
         db.add(user_record)
         db.commit()
